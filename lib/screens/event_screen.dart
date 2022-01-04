@@ -1,22 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_karaoke/models/my_song_data_fb_model.dart';
+import 'package:my_karaoke/models/shopping_list.dart';
 import 'package:my_karaoke/screens/add_edit_screen.dart';
 import 'package:my_karaoke/screens/event_list.dart';
 import 'package:my_karaoke/screens/search_page.dart';
+import 'package:my_karaoke/screens/song_list.dart';
 import 'package:my_karaoke/shared/data_provider.dart';
+import 'package:my_karaoke/util/dbhelper.dart';
 import 'login_screen.dart';
 import '../shared/authentication.dart';
 
 enum Janre { Pop, ballade, trots, classic, favority }
 
-class EventScreen extends StatelessWidget {
+class EventScreen extends StatefulWidget {
   final String uid;
 
   const EventScreen({Key? key, required this.uid}) : super(key: key);
+  static int selectedIndex = 0;
+
+  @override
+  State<EventScreen> createState() => _EventScreenState();
+}
+
+class _EventScreenState extends State<EventScreen> {
+  late List<ShoppingList> shoppingList;
+  DbHelper? helper;
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final Authentication auth = new Authentication();
+    helper = DbHelper();
     return WillPopScope(
       onWillPop: () {
         return Future(() => false);
@@ -32,7 +50,7 @@ class EventScreen extends StatelessWidget {
                   MaterialPageRoute(
                       builder: (context) {
                         return SearchPage(
-                          userId: uid,
+                          userId: widget.uid,
                         );
                       },
                       fullscreenDialog: true),
@@ -74,6 +92,10 @@ class EventScreen extends StatelessWidget {
               icon: Icon(Icons.menu),
             ),
             IconButton(
+              onPressed: () => _showPopupMenu(context),
+              icon: Icon(Icons.download),
+            ),
+            IconButton(
               icon: Icon(Icons.exit_to_app),
               onPressed: () {
                 auth.signOut().then((result) {
@@ -85,25 +107,94 @@ class EventScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: EventList(
-          uid: uid,
+        body: Center(
+          // child: _widgetOptions.elementAt(selectedIndex),
+          child: getBody(EventScreen.selectedIndex),
+          // child: ShList(),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (context) => AddEditPage(
-                        uid: uid,
-                        isNew: true,
-                      )),
-            );
-            ;
+        // body: EventList(
+        //   uid: widget.uid,
+        // ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: [
+            BottomNavigationBarItem(
+              label: "Firebase",
+              icon: Icon(Icons.web_outlined),
+            ),
+            BottomNavigationBarItem(
+              label: "내부SQL",
+              icon: Icon(Icons.data_saver_on),
+            ),
+            // BottomNavigationBarItem(
+            //   label: "SQL test",
+            //   icon: Icon(Icons.ten_mp),
+            // ),
+          ],
+          // type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.grey,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.blue.withOpacity(.40),
+          selectedFontSize: 15,
+          unselectedFontSize: 12,
+          currentIndex: EventScreen.selectedIndex, //현재 선택된 Index
+          onTap: (int index) {
+            setState(() {
+              EventScreen.selectedIndex = index;
+              // print(selectedIndex);
+            });
           },
-          child: Icon(Icons.add),
         ),
+        floatingActionButton: EventScreen.selectedIndex == 0
+            ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => AddEditPage(
+                              uid: widget.uid,
+                              isNew: true,
+                            )),
+                  );
+                  ;
+                },
+                child: Icon(Icons.add),
+              )
+            : null,
       ),
     );
   }
+
+  Widget getBody(int sel) {
+    if (sel == 0)
+      return EventList(uid: widget.uid);
+    else {
+      return ShList();
+    }
+    // else
+    //   return Container(
+    //     child: ElevatedButton(
+    //       onPressed: () async {
+    //         // helper.testDb();
+    //         List<ShoppingList> shop;
+    //         shop = await helper!.getLists();
+    //         // print(shop.length);
+    //         // ItemsScreen(shoppingList);
+    //       },
+    //       child: Text("make"),
+    //     ),
+    //   );
+    // return Text(
+    //   '내부SQL',
+    //   style: TextStyle(fontSize: 30, fontFamily: 'DoHyeonRegular'),
+    // );
+  }
+
+  List _widgetOptions = [
+    EventList(uid: ""),
+    Text(
+      '내부SQL',
+      style: TextStyle(fontSize: 30, fontFamily: 'DoHyeonRegular'),
+    ),
+  ];
 
   void selectedMenu(BuildContext context, String selectedMenu) {
     showDialog(
@@ -123,7 +214,7 @@ class EventScreen extends StatelessWidget {
       FirebaseFirestore db = FirebaseFirestore.instance;
       var data = await db
           .collection('songs')
-          .doc(uid)
+          .doc(widget.uid)
           .collection("songDatas")
           .where("songJanre", isEqualTo: searchTerm)
           .get();
@@ -180,5 +271,3 @@ class EventScreen extends StatelessWidget {
     selectedMenu(context, selected);
   }
 }
-
-

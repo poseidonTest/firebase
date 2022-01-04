@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:my_karaoke/models/my_song_data_fb_model.dart';
 import 'package:my_karaoke/screens/add_edit_screen.dart';
 import 'package:my_karaoke/shared/data_provider.dart';
 import 'package:provider/src/provider.dart';

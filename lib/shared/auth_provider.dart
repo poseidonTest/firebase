@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebaseAuth;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AuthProgressState extends Equatable {
